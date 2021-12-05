@@ -9,20 +9,38 @@ import tech.btzstudio.family.model.entity.User;
 import tech.btzstudio.family.model.repository.UserRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
 
+    /**
+     * The Jwt service.
+     */
+    private final JwtService jwtService;
+
+    /**
+     * The user repository.
+     */
+    private final UserRepository userRepository;
+
     @Autowired
-    private JwtService jwtService;
+    public UserService (JwtService jwtService, UserRepository userRepository) {
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
+    }
 
-    private UserRepository userRepository;
-
+    /**
+     * Returns the token associated {@link User}.
+     *
+     * @param token the user token.
+     * @return the {@link User} or empty.
+     */
     @Transactional
     public Optional<User> resolveUserFromToken(final String token) {
         return jwtService.decodeToken(token)
                 .map(DecodedJWT::getSubject)
-                .map(userRepository::findByEmail);
+                .map(UUID::fromString)
+                .flatMap(userRepository::findById);
     }
-}
 }

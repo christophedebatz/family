@@ -5,20 +5,22 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import tech.btzstudio.family.model.entity.User;
 
-import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Optional;
 
 @Service
 public class JwtService {
+
+    private static String ISSUER_NAME = "tech.btzstudio";
 
     @Value("auth.jwt.key")
     private String jwtKey;
@@ -26,26 +28,33 @@ public class JwtService {
     @Value("auth.token.cache.ttl.days")
     private Long tokenDaysTtl;
 
-    public String generateToken(final Authentication auth) {
-        var expiredAt = Date.from(
-                LocalDate.now().plusDays(
-                        Optional.ofNullable(tokenDaysTtl).orElse(10L)
-                ).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    /**
+     *
+     * @param user
+     * @return
+     */
+    public String generateToken(final User user) {
+        Date expireAt = Date.from(
+                LocalDateTime.now()
+                        .plusDays(tokenDaysTtl)
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+        );
 
-        var claims = new HashMap<String, Object>();
-        claims.put("roles", auth.getAuthorities());
-        claims.put("userId", auth.)
-
-        return Jwts.builder()
-                .setSubject(auth.getPrincipal().toString())
-                .setClaims(claims)
-                .setIssuedAt(new Date())
-                .setIssuer("tech.btzstudio")
-                .setExpiration(expiredAt)
-                .signWith(SignatureAlgorithm.HS256, jwtKey)
-                .compact();
+        return new String(JWT.create()
+                .withIssuer(ISSUER_NAME)
+                .withSubject(String.valueOf(user.getId()))
+                .withExpiresAt(expireAt)
+                .sign(Algorithm.HMAC512(jwtKey))
+                .getBytes(StandardCharsets.UTF_8)
+                , StandardCharsets.UTF_8);
     }
 
+    /**
+     *
+     * @param token
+     * @return
+     */
     public Optional<DecodedJWT> decodeToken(String token) {
         try {
             return Optional.of(verifier().verify(token));
@@ -55,9 +64,9 @@ public class JwtService {
     }
 
     private JWTVerifier verifier() {
-        JWT
+        return JWT
             .require(Algorithm.HMAC512(jwtKey))
-            .withIssuer("tech.btzstudio")
+            .withIssuer(ISSUER_NAME)
             .build();
     }
 }

@@ -18,9 +18,4 @@ public class JwtAuthenticationToken extends PreAuthenticatedAuthenticationToken 
         super(principal, null, principal.getAuthorities());
         super.setDetails(details);
     }
-
-    @Override
-    public Object getCredentials() {
-        return null;
-    }
 }
