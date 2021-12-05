@@ -1,0 +1,19 @@
+type Mutation {
+    signin (request: AuthRequest!): AuthResponse!
+}
+type AuthRequest {
+    email: String!
+    password: String!
+}
+
+type AuthResponse {
+    token: String!
+    user: User!
+}
+
+type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    roles: [String!]!
+}
