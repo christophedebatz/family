@@ -20,7 +20,7 @@ import java.util.Optional;
 @Service
 public class JwtService {
 
-    private static String ISSUER_NAME = "tech.btzstudio";
+    private static final String ISSUER_NAME = "tech.btzstudio";
 
     @Value("auth.jwt.key")
     private String jwtKey;
@@ -41,13 +41,15 @@ public class JwtService {
                         .toInstant()
         );
 
-        return new String(JWT.create()
+        byte[] token = JWT.create()
                 .withIssuer(ISSUER_NAME)
                 .withSubject(String.valueOf(user.getId()))
                 .withExpiresAt(expireAt)
                 .sign(Algorithm.HMAC512(jwtKey))
                 .getBytes(StandardCharsets.UTF_8)
-                , StandardCharsets.UTF_8);
+        ;
+
+        return new String(token, StandardCharsets.UTF_8);
     }
 
     /**

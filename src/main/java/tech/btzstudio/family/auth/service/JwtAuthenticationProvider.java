@@ -5,12 +5,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import tech.btzstudio.family.model.repository.UserRepository;
-
-import java.util.UUID;
 
 @Component
 public class JwtAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
@@ -20,6 +17,9 @@ public class JwtAuthenticationProvider extends AbstractUserDetailsAuthentication
      */
     private final JwtService jwtService;
 
+    /**
+     * The password encoder
+     */
     private final PasswordEncoder passwordEncoder;
 
     /**

@@ -1,6 +1,7 @@
 package tech.btzstudio.family.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -9,19 +10,39 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 import tech.btzstudio.family.auth.JwtRequestFilter;
+import tech.btzstudio.family.auth.service.JwtAuthenticationProvider;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private AuthenticationProvider authenticationProvider;
+    private final AuthenticationProvider authenticationProvider;
 
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private final JwtRequestFilter jwtRequestFilter;
+
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
+
+    public WebSecurityConfig (AuthenticationProvider authenticationProvider, JwtRequestFilter jwtRequestFilter, JwtAuthenticationProvider jwtAuthenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
+        this.jwtRequestFilter = jwtRequestFilter;
+        this.jwtAuthenticationProvider = jwtAuthenticationProvider;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new Argon2PasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        return jwtAuthenticationProvider;
+    }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) {
