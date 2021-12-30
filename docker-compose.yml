@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:5
+    container_name: redis
+    ports:
+      - 6379:6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: ["redis-server", "--appendonly", "yes"]
+    hostname: redis
+    network_mode: "bridge"
+
+  db:
+    image: 'postgres:latest'
+    container_name: db
+    restart: always
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    network_mode: "bridge"
+    volumes:
+      - database-data:/data
+
+  family-api:
+    image: family/api
+    build: .
+    env_file:
+      - .env
+    container_name: family-api
+    command: ["/bin/bash", "/app/bin/entrypoint.sh"]
+    depends_on:
+      - db
+      - redis
+    links:
+      - db:db
+      - redis:redis
+    ports:
+      - "1819:3000"
+      - "8080:8080"
+    volumes:
+      - .:/app:delegated
+    network_mode: "bridge"
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  redis-data:
+  database-data:
+    driver: local

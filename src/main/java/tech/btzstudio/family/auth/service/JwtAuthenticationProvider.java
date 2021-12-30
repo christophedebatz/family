@@ -5,22 +5,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import tech.btzstudio.family.model.repository.UserRepository;
 
+import javax.annotation.Resource;
+
 @Component
 public class JwtAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
-
-    /**
-     * The JWT service.
-     */
-    private final JwtService jwtService;
-
-    /**
-     * The password encoder
-     */
-    private final PasswordEncoder passwordEncoder;
 
     /**
      * The user repository.
@@ -28,9 +21,7 @@ public class JwtAuthenticationProvider extends AbstractUserDetailsAuthentication
     private final UserRepository userRepository;
 
     @Autowired
-    public JwtAuthenticationProvider (JwtService jwtService, PasswordEncoder passwordEncoder, UserRepository userRepository) {
-        this.jwtService = jwtService;
-        this.passwordEncoder = passwordEncoder;
+    public JwtAuthenticationProvider (UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -47,7 +38,7 @@ public class JwtAuthenticationProvider extends AbstractUserDetailsAuthentication
      */
     @Override
     protected UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
-        String password = passwordEncoder.encode((String) authentication.getCredentials());
+        String password = (new Argon2PasswordEncoder()).encode((String) authentication.getCredentials());
         return userRepository.findByEmailAndPassword(username, password);
     }
 

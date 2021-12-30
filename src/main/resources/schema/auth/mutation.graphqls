@@ -1,11 +1,3 @@
-type Mutation {
-    signin (request: AuthRequest!): AuthResponse!
-}
-type AuthRequest {
-    email: String!
-    password: String!
-}
-
 type AuthResponse {
     token: String!
     user: User!
@@ -16,4 +8,12 @@ type User {
     firstName: String!
     lastName: String!
     roles: [String!]!
+}
+
+type Mutation {
+    signin (email: String!, password: String!): AuthResponse!
+}
+
+type Query {
+    hello(): String!
 }

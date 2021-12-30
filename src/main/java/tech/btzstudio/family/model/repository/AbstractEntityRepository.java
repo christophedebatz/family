@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
-import tech.btzstudio.family.model.entity.BaseEntity;
+import tech.btzstudio.family.model.entity.EntityInterface;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @NoRepositoryBean
-abstract class AbstractEntityRepository<E extends BaseEntity> implements CrudRepository<E, UUID> {
+abstract class AbstractEntityRepository<E extends EntityInterface> implements CrudRepository<E, UUID> {
 
     @Autowired
     protected EntityManager entityManager;

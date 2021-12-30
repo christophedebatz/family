@@ -8,24 +8,23 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
-import tech.btzstudio.family.auth.dto.AuthRequest;
 import tech.btzstudio.family.auth.dto.AuthResponse;
 import tech.btzstudio.family.auth.service.UserSessionSupplier;
 
 @Component
-public class AuthMutationResolver implements GraphQLMutationResolver {
+public class Mutation implements GraphQLMutationResolver {
 
     private final UserSessionSupplier sessionSupplier;
 
     @Autowired
-    public AuthMutationResolver (UserSessionSupplier sessionSupplier) {
+    public Mutation (UserSessionSupplier sessionSupplier) {
         this.sessionSupplier = sessionSupplier;
     }
 
     @PreAuthorize("isAnonymous()")
-    public AuthResponse signin(final AuthRequest request) {
+    public AuthResponse signin(final String email, final String password) {
         try {
-            var session = sessionSupplier.apply(request.getEmail(), request.getPassword());
+            var session = sessionSupplier.apply(email, password);
             return new AuthResponse(session.token(), session.user());
 
         } catch (DisabledException e) {

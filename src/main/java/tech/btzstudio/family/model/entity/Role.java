@@ -4,10 +4,16 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "role")
-public class Role extends BaseEntity implements GrantedAuthority {
+public class Role implements GrantedAuthority, EntityInterface {
+
+    @Id
+    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @GeneratedValue
+    private UUID id;
 
     @Column(name ="name")
     private String name;
@@ -22,6 +28,14 @@ public class Role extends BaseEntity implements GrantedAuthority {
             inverseJoinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id")
     )
     private List<Permission> permissions;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;

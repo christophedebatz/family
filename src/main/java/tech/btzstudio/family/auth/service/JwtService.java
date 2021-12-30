@@ -11,9 +11,7 @@ import tech.btzstudio.family.model.entity.User;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Optional;
 
@@ -26,7 +24,7 @@ public class JwtService {
     private String jwtKey;
 
     @Value("auth.token.cache.ttl.days")
-    private Long tokenDaysTtl;
+    private String tokenDaysTtl;
 
     /**
      *
@@ -36,7 +34,7 @@ public class JwtService {
     public String generateToken(final User user) {
         Date expireAt = Date.from(
                 LocalDateTime.now()
-                        .plusDays(tokenDaysTtl)
+                        .plusDays(Long.parseLong(tokenDaysTtl))
                         .atZone(ZoneId.systemDefault())
                         .toInstant()
         );

@@ -6,10 +6,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user")
-public class User extends BaseEntity implements UserDetails {
+public class User implements UserDetails, EntityInterface {
+
+    @Id
+    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @GeneratedValue
+    private UUID id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -27,7 +33,6 @@ public class User extends BaseEntity implements UserDetails {
     private String phone;
 
     @OneToOne(targetEntity = File.class, cascade = {CascadeType.REMOVE, CascadeType.PERSIST}, orphanRemoval = true)
-    @Column(name = "thumbnail_file_id")
     private File thumbnail;
 
     @ManyToMany
@@ -37,6 +42,14 @@ public class User extends BaseEntity implements UserDetails {
         inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
     )
     private List<Role> roles;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
     public String getFirstName() {
         return firstName;
