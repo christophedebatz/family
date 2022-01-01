@@ -20,7 +20,8 @@ services:
       - 5432:5432
     env_file:
       - .env
-    network_mode: "bridge"
+    networks:
+      - family
     volumes:
       - database-data:/data
 
@@ -42,10 +43,13 @@ services:
       - "8080:8080"
     volumes:
       - .:/app:delegated
-    network_mode: "bridge"
+    networks:
+      - family
 
 networks:
   default:
+    driver: bridge
+  family:
     driver: bridge
 
 volumes:

@@ -15,5 +15,5 @@ type Mutation {
 }
 
 type Query {
-    hello(): String!
+    hello: String!
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
 public class Role implements GrantedAuthority, EntityInterface {
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "id")
     @GeneratedValue
     private UUID id;
 

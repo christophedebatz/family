@@ -14,7 +14,7 @@ public class File implements EntityInterface {
     }
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "id")
     @GeneratedValue
     private UUID id;
 
