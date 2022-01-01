@@ -1,13 +1,27 @@
 package tech.btzstudio.family.model.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import io.smallrye.mutiny.Uni;
+import org.springframework.stereotype.Repository;
+import tech.btzstudio.family.model.entity.QUser;
 import tech.btzstudio.family.model.entity.User;
 
-import java.util.UUID;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
-public interface UserRepository extends CrudRepository<User, UUID> {
+@Repository
+public class UserRepository extends AbstractEntityRepository<User> {
 
-    User findByEmail(String email);
-    User findByEmailAndPassword(String email, String password);
+    public UserRepository () {
+        super(User.class);
+    }
+
+    public Uni<User> findByEmail(final String email) {
+        CriteriaBuilder cb = getFactory().getCriteriaBuilder();
+        CriteriaQuery<User> query = cb.createQuery(getClassType());
+        Root<User> root = query.from(getClassType());
+        query.where(query.from(getClassType());
+        return getFactory().withSession(session -> session.createQuery(query).getSingleResult());
+    }
 
 }

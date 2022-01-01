@@ -1,0 +1,19 @@
+type AuthResponse {
+    token: String!
+    user: User!
+}
+
+type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    roles: [String!]!
+}
+
+type Mutation {
+    signin(email: String!, password: String!): AuthResponse!
+}
+
+type Query {
+    hello: String!
+}

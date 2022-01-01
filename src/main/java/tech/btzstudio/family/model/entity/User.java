@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User implements UserDetails, EntityInterface {
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "id")
     @GeneratedValue
     private UUID id;
 

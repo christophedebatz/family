@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public interface EntityInterface {
 
-    public UUID getId();
+    UUID getId();
 
-    public void setId(UUID id);
+    void setId(UUID id);
 }

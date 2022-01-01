@@ -1,5 +1,7 @@
 package tech.btzstudio.family.model.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 import java.util.UUID;
 
@@ -14,7 +16,7 @@ public class File implements EntityInterface {
     }
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "id")
     @GeneratedValue
     private UUID id;
 

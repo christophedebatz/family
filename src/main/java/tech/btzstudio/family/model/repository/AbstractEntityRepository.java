@@ -1,24 +1,19 @@
 package tech.btzstudio.family.model.repository;
 
-import org.jetbrains.annotations.NotNull;
+import io.smallrye.mutiny.Uni;
+import org.hibernate.reactive.mutiny.Mutiny;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 import tech.btzstudio.family.model.entity.EntityInterface;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @NoRepositoryBean
-abstract class AbstractEntityRepository<E extends EntityInterface> implements CrudRepository<E, UUID> {
+abstract class AbstractEntityRepository<E extends EntityInterface> {
 
     @Autowired
-    protected EntityManager entityManager;
+    private Mutiny.SessionFactory factory;
 
     private final Class<E> classType;
 
@@ -26,100 +21,86 @@ abstract class AbstractEntityRepository<E extends EntityInterface> implements Cr
         this.classType = classType;
     }
 
-    @Override
-    @NotNull
-    public <S extends E> S save(S entity) {
-        this.entityManager.persist(entity);
-        return entity;
+    protected Mutiny.SessionFactory getFactory () {
+        return factory;
     }
 
-    @Override
-    @NotNull
-    public <S extends E> Iterable<S> saveAll(Iterable<S> entities) {
-        entities.forEach(this::save);
-        return entities;
+    protected Class<E> getClassType() {
+        return classType;
     }
 
-    @Override
-    @NotNull
-    public Optional<E> findById(@NotNull UUID uuid) {
-        return Optional.ofNullable(this.entityManager.find(this.classType, uuid));
+    public <S extends E> Uni<S> save(S entity) {
+        return factory.withSession(session -> session.persist(entity).chain(session::flush).replaceWith(entity));
     }
 
-    @Override
-    public boolean existsById(@NotNull UUID uuid) {
-        return this.findById(uuid).isPresent();
+    public <S extends E> Uni<List<S>> saveAll(Iterable<S> entities) {
+        List<S> list = new ArrayList<>();
+        entities.forEach(list::add);
+
+        return factory.withTransaction(session ->
+                session.persistAll(list.toArray())
+                        .chain(session::flush)
+                        .chain(() -> Uni.createFrom().item(list)
+                )
+        );
     }
 
-    @Override
-    @NotNull
-    public Iterable<E> findAll() {
-        CriteriaBuilder cb = this.entityManager.getCriteriaBuilder();
-        CriteriaQuery<E> cq = cb.createQuery(this.classType);
-        Root<E> rootEntry = cq.from(this.classType);
-        CriteriaQuery<E> all = cq.select(rootEntry);
-        TypedQuery<E> allQuery = this.entityManager.createQuery(all);
-        return allQuery.getResultList();
+    public <T extends UUID> Uni<E> findById(T uuid) {
+        return factory.withSession(session -> session.find(classType, uuid));
     }
 
-    @Override
-    @NotNull
-    public Iterable<E> findAllById(@NotNull Iterable<UUID> uuids) {
-        CriteriaBuilder cb = this.entityManager.getCriteriaBuilder();
-        CriteriaQuery<E> cq = cb.createQuery(this.classType);
-        Root<E> rootEntry = cq.from(this.classType);
-
-        Expression<UUID> parentExpression = rootEntry.get("id");
-        Predicate parentPredicate = parentExpression.in(uuids);
-        cq.where(parentPredicate);
-
-        CriteriaQuery<E> all = cq.select(rootEntry).where();
-        TypedQuery<E> allQuery = this.entityManager.createQuery(all);
-        return allQuery.getResultList();
+    public <T extends UUID> Uni<Boolean> existsById(T uuid) {
+        return findById(uuid).chain(entity -> Uni.createFrom().item(null != entity));
     }
 
-    @Override
-    public long count() {
-        CriteriaBuilder cb = this.entityManager.getCriteriaBuilder();
-        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
-        cq.select(cb.count(cq.from(this.classType)));
-        return entityManager.createQuery(cq).getSingleResult();
+    public Uni<List<E>> findAll() {
+        CriteriaBuilder cb = factory.getCriteriaBuilder();
+        CriteriaQuery<E> query = cb.createQuery(classType);
+        Root<E> root = query.from(classType);
+        return factory.withSession(session -> session.createQuery(query).getResultList());
     }
 
-    @Override
-    public void deleteById(@NotNull UUID uuid) {
-        this.deleteAllById(List.of(uuid));
+    public Uni<List<E>> findAllById(Iterable<? extends UUID> uuids, int offset, int limit) {
+        CriteriaBuilder cb = factory.getCriteriaBuilder();
+        CriteriaQuery<E> query = cb.createQuery(classType);
+        query.where(query.from(classType).get("id").in(uuids));
+
+        return factory.withSession(session -> session.createQuery(query)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList());
     }
 
-    @Override
-    public void delete(@NotNull E entity) {
-        this.entityManager.remove(entity);
+    public Uni<Long> count() {
+        CriteriaBuilder cb = factory.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        query.select(cb.count(query.from(classType)));
+        return factory.withSession(session -> session.createQuery(query).getSingleResult());
     }
 
-    @Override
-    public void deleteAllById(@NotNull Iterable<? extends UUID> uuids) {
-        CriteriaBuilder cb = this.entityManager.getCriteriaBuilder();
-        CriteriaDelete<E> cd = cb.createCriteriaDelete(this.classType);
-        Root<E> rootEntry = cd.from(this.classType);
+    public Uni<Integer> deleteById(UUID uuid) {
+        return deleteAllById(List.of(uuid));
+    }
+
+    public Uni<Void> delete(E entity) {
+        return factory.withSession(session -> session.remove(entity));
+    }
+
+    public Uni<Integer> deleteAll(Iterable<? extends E> entities) {
+        List<UUID> ids = new ArrayList<>();
+        entities.forEach(entity -> ids.add(entity.getId()));
+        return deleteAllById(ids);
+    }
+
+    public Uni<Integer> deleteAllById(Iterable<? extends UUID> uuids) {
+        CriteriaBuilder cb = factory.getCriteriaBuilder();
+        CriteriaDelete<E> cd = cb.createCriteriaDelete(classType);
+        Root<E> rootEntry = cd.from(classType);
 
         Expression<UUID> parentExpression = rootEntry.get("id");
         Predicate parentPredicate = parentExpression.in(uuids);
         cd.where(parentPredicate);
 
-        this.entityManager.createQuery(cd).executeUpdate();
-    }
-
-    @Override
-    public void deleteAll(@NotNull Iterable<? extends E> entities) {
-        List<UUID> ids = new ArrayList<>();
-        entities.forEach(entity -> ids.add(entity.getId()));
-        this.deleteAllById(ids);
-    }
-
-    @Override
-    public void deleteAll() {
-        CriteriaBuilder cb = this.entityManager.getCriteriaBuilder();
-        CriteriaDelete<E> cd = cb.createCriteriaDelete(this.classType);
-        this.entityManager.createQuery(cd).executeUpdate();
+        return factory.withSession(session -> session.createQuery(cd).executeUpdate());
     }
 }

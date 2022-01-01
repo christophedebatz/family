@@ -9,7 +9,7 @@ import java.util.UUID;
 public class Permission implements EntityInterface {
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "id")
     @GeneratedValue
     private UUID id;
 

@@ -1,9 +1,11 @@
 package tech.btzstudio.family.user.service;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.smallrye.mutiny.Uni;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import tech.btzstudio.family.auth.service.JwtService;
 import tech.btzstudio.family.model.entity.User;
 import tech.btzstudio.family.model.repository.UserRepository;
@@ -37,10 +39,15 @@ public class UserService {
      * @return the {@link User} or empty.
      */
     @Transactional
-    public Optional<User> resolveUserFromToken(final String token) {
-        return jwtService.decodeToken(token)
+    public Uni<User> resolveUserFromToken(final String token) {
+        Optional<UUID> id = jwtService.decodeToken(token)
                 .map(DecodedJWT::getSubject)
-                .map(UUID::fromString)
-                .flatMap(userRepository::findById);
+                .map(UUID::fromString);
+
+        if (id.isPresent()) {
+            return userRepository.findById(id.get());
+        }
+
+        return Uni.createFrom().item(null);
     }
 }
